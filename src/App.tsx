@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Plus, Trash2, CheckCircle2, Circle, GripVertical, Search } from 'lucide-react'
+import { useState } from 'react'
+import { Plus, Search, Trash2 } from 'lucide-react'
 import {
   DndContext,
   closestCenter,
@@ -10,409 +10,255 @@ import {
   type DragEndEvent
 } from '@dnd-kit/core'
 import {
-  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
-  useSortable
+  arrayMove
 } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
 import {
-  STORAGE_KEY,
   PRIORITY,
-  type Priority,
   FILTER,
-  type Filter,
-  PRIORITY_COLORS,
-  THEME_COLORS,
   ICON_SIZE
 } from './constants'
-import './index.css'
+import { useTodos, useTheme } from './hooks/useTodoApp'
+import { GlobalStyle } from './styles/GlobalStyle'
+import { Container, Title, Button, Input, Select } from './components/StyledElements'
+import { SortableTodoItem } from './components/SortableTodoItem'
+import styled from 'styled-components'
+import type { Priority, Filter, ThemeType } from './types/index'
 
-interface Todo {
-  id: string
-  text: string
-  completed: boolean
-  priority: Priority
-  dueDate?: string
-}
+const HeaderActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+`;
 
-interface SortableItemProps {
-  todo: Todo
-  toggleTodo: (id: string) => void
-  deleteTodo: (id: string) => void
-  updatePriority: (id: string, priority: Priority) => void
-  updateTodo: (id: string, text: string) => void
-  updateDueDate: (id: string, date: string) => void
-}
+const Dashboard = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+  background: rgba(0, 0, 0, 0.15);
+  padding: 1.25rem;
+  border-radius: 1rem;
+  border: 1px solid var(--border-color);
+`;
 
-function SortableTodoItem({ todo, toggleTodo, deleteTodo, updatePriority, updateTodo, updateDueDate }: SortableItemProps) {
-  const [isEditing, setIsEditing] = useState(false)
-  const [editText, setEditText] = useState(todo.text)
+const StatItem = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  span:first-child { font-size: 0.65rem; font-weight: 800; opacity: 0.5; margin-bottom: 0.25rem; }
+  span:last-child { font-size: 1.5rem; font-weight: 700; }
+`;
 
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging
-  } = useSortable({ id: todo.id });
+const SearchBox = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: var(--input-bg);
+  padding: 0.75rem 1.25rem;
+  border-radius: 1rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border-color);
+  transition: all 0.3s;
+  &:focus-within { border-color: var(--primary-solid); background: rgba(0,0,0,0.2); }
+`;
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    zIndex: isDragging ? 1 : 0,
-    opacity: isDragging ? 0.5 : 1,
-  };
+const SearchInput = styled.input`
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-color);
+  width: 100%;
+  font-size: 1rem;
+  &::placeholder { opacity: 0.3; }
+`;
 
-  const handleEdit = () => {
-    if (isEditing && editText.trim() !== todo.text) {
-      updateTodo(todo.id, editText)
-    }
-    setIsEditing(!isEditing)
-  }
+const CommandCenter = styled.div`
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 2.5rem;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 1rem;
+`;
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') handleEdit()
-    if (e.key === 'Escape') {
-      setEditText(todo.text)
-      setIsEditing(false)
-    }
-  }
+const ListContainer = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
 
-  const isOverdue = todo.dueDate && !todo.completed && new Date(todo.dueDate) < new Date(new Date().setHours(0,0,0,0))
-
-  return (
-    <li ref={setNodeRef} style={style} className={`todo-item priority-${todo.priority} ${isOverdue ? 'overdue' : ''}`}>
-      <div className="drag-handle" {...attributes} {...listeners}>
-        <GripVertical size={ICON_SIZE.SMALL} color={THEME_COLORS.DRAG_HANDLE} />
-      </div>
-      <button
-        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}
-        onClick={() => toggleTodo(todo.id)}
-        aria-label={`toggle-${todo.id}`}
-      >
-        {todo.completed ? (
-          <CheckCircle2 size={ICON_SIZE.MEDIUM} color={THEME_COLORS.PRIMARY} />
-        ) : (
-          <Circle size={ICON_SIZE.MEDIUM} color={THEME_COLORS.TEXT_MUTED} />
-        )}
-      </button>
-      
-      <div className="todo-content">
-        {isEditing ? (
-          <input
-            className="edit-input"
-            value={editText}
-            onChange={(e) => setEditText(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onBlur={handleEdit}
-            autoFocus
-          />
-        ) : (
-          <span 
-            className={`todo-text ${todo.completed ? 'completed' : ''}`}
-            onDoubleClick={() => setIsEditing(true)}
-          >
-            {todo.text}
-          </span>
-        )}
-        {todo.dueDate && (
-          <div className={`due-date-badge ${isOverdue ? 'overdue' : ''}`}>
-            {todo.dueDate}
-          </div>
-        )}
-      </div>
-
-      <div className="todo-actions">
-        <input
-          type="date"
-          className="date-input"
-          value={todo.dueDate || ''}
-          onChange={(e) => updateDueDate(todo.id, e.target.value)}
-        />
-        <select
-          className="priority-select"
-          value={todo.priority}
-          onChange={(e) => updatePriority(todo.id, e.target.value as Priority)}
-          style={{ color: PRIORITY_COLORS[todo.priority] }}
-        >
-          <option value={PRIORITY.HIGH}>高</option>
-          <option value={PRIORITY.MEDIUM}>中</option>
-          <option value={PRIORITY.LOW}>低</option>
-        </select>
-        <button className="delete-btn" onClick={() => deleteTodo(todo.id)}>
-          <Trash2 size={ICON_SIZE.SMALL} />
-        </button>
-      </div>
-    </li>
-  );
-}
+const FooterNav = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border-color);
+`;
 
 function App() {
-  const [todos, setTodos] = useState<Todo[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (!saved) return []
-    const parsed = JSON.parse(saved)
-    return parsed.map((t: any) => ({ 
-      ...t, 
-      priority: t.priority || PRIORITY.MEDIUM,
-      dueDate: t.dueDate || undefined
-    }))
-  })
-  const [inputValue, setInputValue] = useState('')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [inputPriority, setInputPriority] = useState<Priority>(PRIORITY.MEDIUM)
-  const [inputDueDate, setInputDueDate] = useState('')
-  const [filter, setFilter] = useState<Filter>(FILTER.ALL)
-  const [theme, setTheme] = useState<'dark' | 'light' | 'tachyon'>(() => {
-    return (localStorage.getItem('tachyon-theme') as any) || 'dark'
-  })
+  const { 
+    todos, addTodo, toggleTodo, deleteTodo, 
+    updateTodo, updatePriority, updateDueDate, 
+    clearCompleted, reorderTodos 
+  } = useTodos();
+  const { theme, setTheme } = useTheme();
+
+  const [inputValue, setInputValue] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [inputPriority, setInputPriority] = useState<Priority>(PRIORITY.MEDIUM);
+  const [inputDueDate, setInputDueDate] = useState('');
+  const [filter, setFilter] = useState<Filter>(FILTER.ALL);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  )
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme)
-    localStorage.setItem('tachyon-theme', theme)
-  }, [theme])
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(todos))
-  }, [todos])
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   const filteredTodos = todos.filter((todo) => {
     const matchesFilter = 
       filter === FILTER.ALL ? true :
       filter === FILTER.ACTIVE ? !todo.completed :
-      todo.completed
-    
-    const matchesSearch = todo.text.toLowerCase().includes(searchQuery.toLowerCase())
-    
-    return matchesFilter && matchesSearch
-  })
+      todo.completed;
+    const matchesSearch = todo.text.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesFilter && matchesSearch;
+  });
 
-  const addTodo = () => {
-    if (!inputValue.trim()) return
-    const newTodo: Todo = {
-      id: typeof crypto.randomUUID === 'function' 
-        ? crypto.randomUUID() 
-        : Math.random().toString(36).substring(2) + Date.now().toString(36),
-      text: inputValue,
-      completed: false,
-      priority: inputPriority,
-      dueDate: inputDueDate || undefined
-    }
-    setTodos([...todos, newTodo])
-    setInputValue('')
-    setInputPriority(PRIORITY.MEDIUM)
-    setInputDueDate('')
-  }
-
-  const toggleTodo = (id: string) => {
-    setTodos(
-      todos.map((todo) =>
-        todo.id === id ? { ...todo, completed: !todo.completed } : todo
-      )
-    )
-  }
-
-  const deleteTodo = (id: string) => {
-    setTodos(todos.filter((todo) => todo.id !== id))
-  }
-
-  const updateTodo = (id: string, text: string) => {
-    setTodos(
-      todos.map((todo) =>
-        todo.id === id ? { ...todo, text } : todo
-      )
-    )
-  }
-
-  const updatePriority = (id: string, priority: Priority) => {
-    setTodos(
-      todos.map((todo) =>
-        todo.id === id ? { ...todo, priority } : todo
-      )
-    )
-  }
-
-  const updateDueDate = (id: string, date: string) => {
-    setTodos(
-      todos.map((todo) =>
-        todo.id === id ? { ...todo, dueDate: date } : todo
-      )
-    )
-  }
-
-  const clearCompleted = () => {
-    setTodos(todos.filter((todo) => !todo.completed))
-  }
-
-  // 統計データの計算
-  const totalCount = todos.length
-  const completedCount = todos.filter((t) => t.completed).length
-  const activeCount = totalCount - completedCount
-  const completionRate = totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100)
+  const handleAdd = () => {
+    if (!inputValue.trim()) return;
+    addTodo(inputValue, inputPriority, inputDueDate || undefined);
+    setInputValue('');
+    setInputDueDate('');
+  };
 
   const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event
-
+    const { active, over } = event;
     if (over && active.id !== over.id) {
-      setTodos((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id)
-        const newIndex = items.findIndex((item) => item.id === over.id)
-        return arrayMove(items, oldIndex, newIndex)
-      })
+      const oldIndex = todos.findIndex((t) => t.id === active.id);
+      const newIndex = todos.findIndex((t) => t.id === over.id);
+      reorderTodos(arrayMove(todos, oldIndex, newIndex));
     }
-  }
+  };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') addTodo()
-  }
+  const stats = {
+    total: todos.length,
+    completed: todos.filter(t => t.completed).length,
+    active: todos.length - todos.filter(t => t.completed).length,
+    rate: todos.length === 0 ? 0 : Math.round((todos.filter(t => t.completed).length / todos.length) * 100)
+  };
 
   return (
-    <div className="todo-container">
-      <div className="theme-switcher">
-        {(['dark', 'light', 'tachyon'] as const).map((t) => (
-          <button
-            key={t}
-            className={`theme-btn ${theme === t ? 'active' : ''}`}
-            onClick={() => setTheme(t)}
-          >
-            {t.toUpperCase()}
-          </button>
-        ))}
-      </div>
-      <h1 className="todo-title">実験的TODOアプリ</h1>
-      
-      <div className="stats-dashboard">
-        <div className="stats-grid">
-          <div className="stats-item">
-            <span className="stats-label">全タスク</span>
-            <span className="stats-value">{totalCount}</span>
-          </div>
-          <div className="stats-item">
-            <span className="stats-label">完了済み</span>
-            <span className="stats-value" style={{ color: THEME_COLORS.PRIMARY }}>{completedCount}</span>
-          </div>
-          <div className="stats-item">
-            <span className="stats-label">未完了</span>
-            <span className="stats-value" style={{ color: PRIORITY_COLORS[PRIORITY.HIGH] }}>{activeCount}</span>
-          </div>
-          <div className="stats-item">
-            <span className="stats-label">完了率</span>
-            <span className="stats-value">{completionRate}%</span>
-          </div>
-        </div>
-        <div className="progress-bar-container">
-          <div 
-            className="progress-bar-fill" 
-            style={{ width: `${completionRate}%` }}
+    <>
+      <GlobalStyle themeMode={theme} />
+      <Container>
+        <HeaderActions>
+          {(['dark', 'light', 'tachyon'] as const).map(t => (
+            <Button 
+              key={t} 
+              variant={theme === t ? 'active' : 'small'} 
+              onClick={() => setTheme(t as ThemeType)}
+            >
+              {t.toUpperCase()}
+            </Button>
+          ))}
+        </HeaderActions>
+
+        <Title>AGNES LAB TODO</Title>
+
+        <Dashboard>
+          <StatItem><span>TOTAL</span><span>{stats.total}</span></StatItem>
+          <StatItem><span>DONE</span><span style={{color: 'var(--primary-solid)'}}>{stats.completed}</span></StatItem>
+          <StatItem><span>ACTIVE</span><span style={{color: 'var(--danger-color)'}}>{stats.active}</span></StatItem>
+          <StatItem><span>SUCCESS</span><span>{stats.rate}%</span></StatItem>
+        </Dashboard>
+
+        <SearchBox>
+          <Search size={20} opacity={0.3} />
+          <SearchInput 
+            placeholder="検体をスキャン..." 
+            value={searchQuery} 
+            onChange={e => setSearchQuery(e.target.value)}
           />
-        </div>
-      </div>
+        </SearchBox>
 
-      <div className="search-group">
-        <Search size={18} className="search-icon" />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="検体を検索..."
-          className="search-input"
-        />
-      </div>
-
-      <div className="todo-input-group">
-        <select
-          className="priority-input-select"
-          value={inputPriority}
-          onChange={(e) => setInputPriority(e.target.value as Priority)}
-        >
-          <option value={PRIORITY.HIGH}>高</option>
-          <option value={PRIORITY.MEDIUM}>中</option>
-          <option value={PRIORITY.LOW}>低</option>
-        </select>
-        <input
-          type="date"
-          className="date-input-field"
-          value={inputDueDate}
-          onChange={(e) => setInputDueDate(e.target.value)}
-        />
-        <input
-          type="text"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={handleKeyPress}
-          placeholder="モルモット君への新しい指令..."
-        />
-        <button className="add-btn" onClick={addTodo} aria-label="plus">
-          <Plus size={ICON_SIZE.LARGE} />
-        </button>
-      </div>
-
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={filteredTodos.map(t => t.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          <ul className="todo-list">
-            {filteredTodos.map((todo) => (
-              <SortableTodoItem
-                key={todo.id}
-                todo={todo}
-                toggleTodo={toggleTodo}
-                deleteTodo={deleteTodo}
-                updatePriority={updatePriority}
-                updateTodo={updateTodo}
-                updateDueDate={updateDueDate}
-              />
-            ))}
-          </ul>
-        </SortableContext>
-      </DndContext>
-
-      <div className="filter-group">
-        {(Object.values(FILTER)).map((f) => (
-          <button
-            key={f}
-            className={`filter-btn ${filter === f ? 'active' : ''}`}
-            onClick={() => setFilter(f)}
-            aria-label={`filter-${f}`}
+        <CommandCenter>
+          <Select 
+            value={inputPriority} 
+            onChange={e => setInputPriority(e.target.value as Priority)}
           >
-            {f === FILTER.ALL ? 'すべて' : f === FILTER.ACTIVE ? '未完了' : '完了済み'}
-          </button>
-        ))}
-      </div>
+            <option value={PRIORITY.HIGH}>HIGH</option>
+            <option value={PRIORITY.MEDIUM}>MID</option>
+            <option value={PRIORITY.LOW}>LOW</option>
+          </Select>
+          <Input 
+            type="date" 
+            value={inputDueDate} 
+            onChange={e => setInputDueDate(e.target.value)} 
+            style={{ width: '45px', padding: '0.75rem 0.5rem' }} 
+            title="Deadline"
+          />
+          <Input 
+            placeholder="新しい実験命令を入力..." 
+            value={inputValue} 
+            onChange={e => setInputValue(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleAdd()}
+          />
+          <Button variant="primary" onClick={handleAdd} aria-label="plus">
+            <Plus size={ICON_SIZE.LARGE} />
+          </Button>
+        </CommandCenter>
 
-      {todos.some((t) => t.completed) && (
-        <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-          <button
-            onClick={clearCompleted}
-            className="clear-completed-btn"
-          >
-            完了済みタスクをすべて削除
-          </button>
-        </div>
-      )}
-      
-      {filteredTodos.length === 0 && (
-        <p style={{ textAlign: 'center', opacity: 0.5, marginTop: '2rem' }}>
-          まだ解析すべきデータが存在しないようだね。
-        </p>
-      )}
-    </div>
-  )
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={filteredTodos.map(t => t.id)} strategy={verticalListSortingStrategy}>
+            <ListContainer>
+              {filteredTodos.map(todo => (
+                <SortableTodoItem
+                  key={todo.id}
+                  todo={todo}
+                  toggleTodo={toggleTodo}
+                  deleteTodo={deleteTodo}
+                  updatePriority={updatePriority}
+                  updateTodo={updateTodo}
+                  updateDueDate={updateDueDate}
+                />
+              ))}
+            </ListContainer>
+          </SortableContext>
+        </DndContext>
+
+        <FooterNav>
+          {(Object.values(FILTER) as Filter[]).map(f => (
+            <Button 
+              key={f} 
+              variant={filter === f ? 'active' : 'ghost'} 
+              onClick={() => setFilter(f)}
+              aria-label={`filter-${f}`}
+              style={{ fontSize: '0.8rem', padding: '0.5rem 1rem' }}
+            >
+              {f === FILTER.ALL ? 'すべて' : f === FILTER.ACTIVE ? '未完了' : '完了済み'}
+            </Button>
+          ))}
+          {todos.some(t => t.completed) && (
+            <Button 
+              variant="danger" 
+              onClick={clearCompleted} 
+              style={{ fontSize: '0.8rem', padding: '0.5rem 1rem', marginLeft: 'auto' }}
+            >
+              <Trash2 size={14} /> 完了済みを破棄
+            </Button>
+          )}
+        </FooterNav>
+      </Container>
+    </>
+  );
 }
 
-export default App
+export default App;

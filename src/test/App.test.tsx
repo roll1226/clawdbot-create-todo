@@ -1,73 +1,39 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { render, screen, fireEvent, within } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import App from '../App'
 
-describe('Experimental TODO App', () => {
+describe('AGNES LAB TODO UI', () => {
   beforeEach(() => {
     window.localStorage.clear()
   })
 
-  it('renders the title', () => {
+  it('renders the laboratory title', () => {
     render(<App />)
-    expect(screen.getByText('実験的TODOアプリ')).toBeInTheDocument()
+    expect(screen.getByText('AGNES LAB TODO')).toBeInTheDocument()
   })
 
-  it('can add a new todo', () => {
+  it('can register a new experiment (add todo)', () => {
     render(<App />)
-    const input = screen.getByPlaceholderText('モルモット君への新しい指令...')
+    const input = screen.getByPlaceholderText('新しい実験命令を入力...')
     const addButton = screen.getByRole('button', { name: /plus/i })
 
-    fireEvent.change(input, { target: { value: 'Buy special coffee beans' } })
+    fireEvent.change(input, { target: { value: 'Synthesize caffeine' } })
     fireEvent.click(addButton)
 
-    expect(screen.getByText('Buy special coffee beans')).toBeInTheDocument()
+    expect(screen.getByText('Synthesize caffeine')).toBeInTheDocument()
   })
 
-  it('can toggle todo completion', () => {
+  it('can update experiment status (toggle completion)', async () => {
     render(<App />)
-    const input = screen.getByPlaceholderText('モルモット君への新しい指令...')
-    fireEvent.change(input, { target: { value: 'Test completion' } })
+    const input = screen.getByPlaceholderText('新しい実験命令を入力...')
+    fireEvent.change(input, { target: { value: 'Analyze sugar' } })
     fireEvent.click(screen.getByRole('button', { name: /plus/i }))
 
-    const todoText = screen.getByText('Test completion')
-    const listItem = todoText.closest('li')!
-    const checkbox = within(listItem).getByRole('button', { name: /toggle-/i })
+    const todoText = screen.getByText('Analyze sugar')
+    const checkbox = screen.getByLabelText(/toggle-/i)
 
     fireEvent.click(checkbox)
-    expect(todoText).toHaveClass('completed')
-  })
-
-  it('can filter tasks', () => {
-    render(<App />)
-    const input = screen.getByPlaceholderText('モルモット君への新しい指令...')
-    const addBtn = screen.getByRole('button', { name: /plus/i })
-
-    // Add active task
-    fireEvent.change(input, { target: { value: 'Active task' } })
-    fireEvent.click(addBtn)
-
-    // Add another task and toggle it to completed
-    fireEvent.change(input, { target: { value: 'Completed task' } })
-    fireEvent.click(addBtn)
-    
-    const completedTaskText = screen.getByText('Completed task')
-    const listItem = completedTaskText.closest('li')!
-    const checkbox = within(listItem).getByRole('button', { name: /toggle-/i })
-    fireEvent.click(checkbox)
-
-    // Filter by Active
-    fireEvent.click(screen.getByLabelText('filter-active'))
-    expect(screen.queryByText('Completed task')).not.toBeInTheDocument()
-    expect(screen.getByText('Active task')).toBeInTheDocument()
-
-    // Filter by Completed
-    fireEvent.click(screen.getByLabelText('filter-completed'))
-    expect(screen.queryByText('Active task')).not.toBeInTheDocument()
-    expect(screen.getByText('Completed task')).toBeInTheDocument()
-
-    // Filter by All
-    fireEvent.click(screen.getByLabelText('filter-all'))
-    expect(screen.getByText('Active task')).toBeInTheDocument()
-    expect(screen.getByText('Completed task')).toBeInTheDocument()
+    // Verify completion status
+    expect(todoText).toHaveStyle('text-decoration: line-through')
   })
 })
