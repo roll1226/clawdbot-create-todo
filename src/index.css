@@ -168,3 +168,30 @@ button.delete-btn:hover {
   border-color: #2dd4bf;
   color: #2dd4bf;
 }
+
+.drag-handle {
+  display: flex;
+  align-items: center;
+  cursor: grab;
+  padding-right: 4px;
+  touch-action: none;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.clear-completed-btn {
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-decoration: underline;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.clear-completed-btn:hover {
+  opacity: 1;
+}

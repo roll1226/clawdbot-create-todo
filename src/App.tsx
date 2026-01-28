@@ -1,11 +1,76 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, CheckCircle2, Circle } from 'lucide-react'
+import { Plus, Trash2, CheckCircle2, Circle, GripVertical } from 'lucide-react'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import './index.css'
 
 interface Todo {
   id: string
   text: string
   completed: boolean
+}
+
+interface SortableItemProps {
+  todo: Todo
+  toggleTodo: (id: string) => void
+  deleteTodo: (id: string) => void
+}
+
+function SortableTodoItem({ todo, toggleTodo, deleteTodo }: SortableItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id: todo.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 1 : 0,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <li ref={setNodeRef} style={style} className="todo-item">
+      <div className="drag-handle" {...attributes} {...listeners}>
+        <GripVertical size={18} color="rgba(255,255,255,0.2)" />
+      </div>
+      <button
+        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}
+        onClick={() => toggleTodo(todo.id)}
+      >
+        {todo.completed ? (
+          <CheckCircle2 size={20} color="#2dd4bf" />
+        ) : (
+          <Circle size={20} color="rgba(255,255,255,0.3)" />
+        )}
+      </button>
+      <span className={`todo-text ${todo.completed ? 'completed' : ''}`}>
+        {todo.text}
+      </span>
+      <button className="delete-btn" onClick={() => deleteTodo(todo.id)}>
+        <Trash2 size={18} />
+      </button>
+    </li>
+  );
 }
 
 function App() {
@@ -15,6 +80,13 @@ function App() {
   })
   const [inputValue, setInputValue] = useState('')
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all')
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
 
   useEffect(() => {
     localStorage.setItem('tachyon-todos', JSON.stringify(todos))
@@ -53,6 +125,18 @@ function App() {
     setTodos(todos.filter((todo) => !todo.completed))
   }
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+
+    if (over && active.id !== over.id) {
+      setTodos((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id)
+        const newIndex = items.findIndex((item) => item.id === over.id)
+        return arrayMove(items, oldIndex, newIndex)
+      })
+    }
+  }
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') addTodo()
   }
@@ -65,7 +149,7 @@ function App() {
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          onKeyPress={handleKeyPress}
+          onKeyDown={handleKeyPress}
           placeholder="モルモット君への新しい指令..."
         />
         <button className="add-btn" onClick={addTodo}>
@@ -73,28 +157,27 @@ function App() {
         </button>
       </div>
 
-      <ul className="todo-list">
-        {filteredTodos.map((todo) => (
-          <li key={todo.id} className="todo-item">
-            <button
-              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-              onClick={() => toggleTodo(todo.id)}
-            >
-              {todo.completed ? (
-                <CheckCircle2 size={20} color="#2dd4bf" />
-              ) : (
-                <Circle size={20} color="rgba(255,255,255,0.3)" />
-              )}
-            </button>
-            <span className={`todo-text ${todo.completed ? 'completed' : ''}`}>
-              {todo.text}
-            </span>
-            <button className="delete-btn" onClick={() => deleteTodo(todo.id)}>
-              <Trash2 size={18} />
-            </button>
-          </li>
-        ))}
-      </ul>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={filteredTodos.map(t => t.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <ul className="todo-list">
+            {filteredTodos.map((todo) => (
+              <SortableTodoItem
+                key={todo.id}
+                todo={todo}
+                toggleTodo={toggleTodo}
+                deleteTodo={deleteTodo}
+              />
+            ))}
+          </ul>
+        </SortableContext>
+      </DndContext>
 
       <div className="filter-group">
         {(['all', 'active', 'completed'] as const).map((f) => (
@@ -112,15 +195,7 @@ function App() {
         <div style={{ textAlign: 'center', marginTop: '1rem' }}>
           <button
             onClick={clearCompleted}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#ef4444',
-              fontSize: '0.8rem',
-              cursor: 'pointer',
-              textDecoration: 'underline',
-              opacity: 0.7,
-            }}
+            className="clear-completed-btn"
           >
             完了済みタスクをすべて削除
           </button>
