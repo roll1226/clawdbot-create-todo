@@ -14,10 +14,17 @@ function App() {
     return saved ? JSON.parse(saved) : []
   })
   const [inputValue, setInputValue] = useState('')
+  const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all')
 
   useEffect(() => {
     localStorage.setItem('tachyon-todos', JSON.stringify(todos))
   }, [todos])
+
+  const filteredTodos = todos.filter((todo) => {
+    if (filter === 'active') return !todo.completed
+    if (filter === 'completed') return todo.completed
+    return true
+  })
 
   const addTodo = () => {
     if (!inputValue.trim()) return
@@ -63,7 +70,7 @@ function App() {
       </div>
 
       <ul className="todo-list">
-        {todos.map((todo) => (
+        {filteredTodos.map((todo) => (
           <li key={todo.id} className="todo-item">
             <button
               style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
@@ -84,8 +91,20 @@ function App() {
           </li>
         ))}
       </ul>
+
+      <div className="filter-group">
+        {(['all', 'active', 'completed'] as const).map((f) => (
+          <button
+            key={f}
+            className={`filter-btn ${filter === f ? 'active' : ''}`}
+            onClick={() => setFilter(f)}
+          >
+            {f === 'all' ? 'すべて' : f === 'active' ? '未完了' : '完了済み'}
+          </button>
+        ))}
+      </div>
       
-      {todos.length === 0 && (
+      {filteredTodos.length === 0 && (
         <p style={{ textAlign: 'center', opacity: 0.5, marginTop: '2rem' }}>
           まだ解析すべきデータが存在しないようだね。
         </p>
