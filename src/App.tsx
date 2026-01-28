@@ -34,6 +34,7 @@ interface Todo {
   text: string
   completed: boolean
   priority: Priority
+  dueDate?: string
 }
 
 interface SortableItemProps {
@@ -41,6 +42,7 @@ interface SortableItemProps {
   toggleTodo: (id: string) => void
   deleteTodo: (id: string) => void
   updatePriority: (id: string, priority: Priority) => void
+<<<<<<< HEAD
   updateTodo: (id: string, text: string) => void
 }
 
@@ -48,6 +50,12 @@ function SortableTodoItem({ todo, toggleTodo, deleteTodo, updatePriority, update
   const [isEditing, setIsEditing] = useState(false)
   const [editText, setEditText] = useState(todo.text)
 
+=======
+  updateDueDate: (id: string, date: string) => void
+}
+
+function SortableTodoItem({ todo, toggleTodo, deleteTodo, updatePriority, updateDueDate }: SortableItemProps) {
+>>>>>>> feature/due-dates
   const {
     attributes,
     listeners,
@@ -64,6 +72,7 @@ function SortableTodoItem({ todo, toggleTodo, deleteTodo, updatePriority, update
     opacity: isDragging ? 0.5 : 1,
   };
 
+<<<<<<< HEAD
   const handleEdit = () => {
     if (isEditing && editText.trim() !== todo.text) {
       updateTodo(todo.id, editText)
@@ -78,9 +87,12 @@ function SortableTodoItem({ todo, toggleTodo, deleteTodo, updatePriority, update
       setIsEditing(false)
     }
   }
+=======
+  const isOverdue = todo.dueDate && !todo.completed && new Date(todo.dueDate) < new Date(new Date().setHours(0,0,0,0))
+>>>>>>> feature/due-dates
 
   return (
-    <li ref={setNodeRef} style={style} className={`todo-item priority-${todo.priority}`}>
+    <li ref={setNodeRef} style={style} className={`todo-item priority-${todo.priority} ${isOverdue ? 'overdue' : ''}`}>
       <div className="drag-handle" {...attributes} {...listeners}>
         <GripVertical size={ICON_SIZE.SMALL} color={THEME_COLORS.DRAG_HANDLE} />
       </div>
@@ -95,6 +107,7 @@ function SortableTodoItem({ todo, toggleTodo, deleteTodo, updatePriority, update
         )}
       </button>
       
+<<<<<<< HEAD
       {isEditing ? (
         <input
           className="edit-input"
@@ -126,6 +139,40 @@ function SortableTodoItem({ todo, toggleTodo, deleteTodo, updatePriority, update
       <button className="delete-btn" onClick={() => deleteTodo(todo.id)}>
         <Trash2 size={ICON_SIZE.SMALL} />
       </button>
+=======
+      <div className="todo-content">
+        <span className={`todo-text ${todo.completed ? 'completed' : ''}`}>
+          {todo.text}
+        </span>
+        {todo.dueDate && (
+          <div className={`due-date-badge ${isOverdue ? 'overdue' : ''}`}>
+            {todo.dueDate}
+          </div>
+        )}
+      </div>
+
+      <div className="todo-actions">
+        <input
+          type="date"
+          className="date-input"
+          value={todo.dueDate || ''}
+          onChange={(e) => updateDueDate(todo.id, e.target.value)}
+        />
+        <select
+          className="priority-select"
+          value={todo.priority}
+          onChange={(e) => updatePriority(todo.id, e.target.value as Priority)}
+          style={{ color: PRIORITY_COLORS[todo.priority] }}
+        >
+          <option value={PRIORITY.HIGH}>高</option>
+          <option value={PRIORITY.MEDIUM}>中</option>
+          <option value={PRIORITY.LOW}>低</option>
+        </select>
+        <button className="delete-btn" onClick={() => deleteTodo(todo.id)}>
+          <Trash2 size={ICON_SIZE.SMALL} />
+        </button>
+      </div>
+>>>>>>> feature/due-dates
     </li>
   );
 }
@@ -140,6 +187,7 @@ function App() {
   const [inputValue, setInputValue] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [inputPriority, setInputPriority] = useState<Priority>(PRIORITY.MEDIUM)
+  const [inputDueDate, setInputDueDate] = useState('')
   const [filter, setFilter] = useState<Filter>(FILTER.ALL)
 
   const sensors = useSensors(
@@ -173,10 +221,12 @@ function App() {
       text: inputValue,
       completed: false,
       priority: inputPriority,
+      dueDate: inputDueDate || undefined
     }
     setTodos([...todos, newTodo])
     setInputValue('')
     setInputPriority(PRIORITY.MEDIUM)
+    setInputDueDate('')
   }
 
   const toggleTodo = (id: string) => {
@@ -203,6 +253,14 @@ function App() {
     setTodos(
       todos.map((todo) =>
         todo.id === id ? { ...todo, priority } : todo
+      )
+    )
+  }
+
+  const updateDueDate = (id: string, date: string) => {
+    setTodos(
+      todos.map((todo) =>
+        todo.id === id ? { ...todo, dueDate: date } : todo
       )
     )
   }
@@ -286,6 +344,12 @@ function App() {
           <option value={PRIORITY.LOW}>低</option>
         </select>
         <input
+          type="date"
+          className="date-input-field"
+          value={inputDueDate}
+          onChange={(e) => setInputDueDate(e.target.value)}
+        />
+        <input
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
@@ -314,7 +378,11 @@ function App() {
                 toggleTodo={toggleTodo}
                 deleteTodo={deleteTodo}
                 updatePriority={updatePriority}
+<<<<<<< HEAD
                 updateTodo={updateTodo}
+=======
+                updateDueDate={updateDueDate}
+>>>>>>> feature/due-dates
               />
             ))}
           </ul>
