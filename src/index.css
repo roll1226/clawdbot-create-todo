@@ -84,6 +84,28 @@ body {
   transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.search-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(15, 23, 42, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.search-icon {
+  opacity: 0.4;
+}
+
+.search-input {
+  background: none !important;
+  border: none !important;
+  padding: 0.25rem 0 !important;
+  font-size: 0.9rem !important;
+}
+
 .todo-input-group {
   display: flex;
   gap: 0.5rem;
