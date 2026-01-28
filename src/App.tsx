@@ -42,20 +42,14 @@ interface SortableItemProps {
   toggleTodo: (id: string) => void
   deleteTodo: (id: string) => void
   updatePriority: (id: string, priority: Priority) => void
-<<<<<<< HEAD
   updateTodo: (id: string, text: string) => void
-}
-
-function SortableTodoItem({ todo, toggleTodo, deleteTodo, updatePriority, updateTodo }: SortableItemProps) {
-  const [isEditing, setIsEditing] = useState(false)
-  const [editText, setEditText] = useState(todo.text)
-
-=======
   updateDueDate: (id: string, date: string) => void
 }
 
-function SortableTodoItem({ todo, toggleTodo, deleteTodo, updatePriority, updateDueDate }: SortableItemProps) {
->>>>>>> feature/due-dates
+function SortableTodoItem({ todo, toggleTodo, deleteTodo, updatePriority, updateTodo, updateDueDate }: SortableItemProps) {
+  const [isEditing, setIsEditing] = useState(false)
+  const [editText, setEditText] = useState(todo.text)
+
   const {
     attributes,
     listeners,
@@ -72,7 +66,6 @@ function SortableTodoItem({ todo, toggleTodo, deleteTodo, updatePriority, update
     opacity: isDragging ? 0.5 : 1,
   };
 
-<<<<<<< HEAD
   const handleEdit = () => {
     if (isEditing && editText.trim() !== todo.text) {
       updateTodo(todo.id, editText)
@@ -87,9 +80,8 @@ function SortableTodoItem({ todo, toggleTodo, deleteTodo, updatePriority, update
       setIsEditing(false)
     }
   }
-=======
+
   const isOverdue = todo.dueDate && !todo.completed && new Date(todo.dueDate) < new Date(new Date().setHours(0,0,0,0))
->>>>>>> feature/due-dates
 
   return (
     <li ref={setNodeRef} style={style} className={`todo-item priority-${todo.priority} ${isOverdue ? 'overdue' : ''}`}>
@@ -107,43 +99,24 @@ function SortableTodoItem({ todo, toggleTodo, deleteTodo, updatePriority, update
         )}
       </button>
       
-<<<<<<< HEAD
-      {isEditing ? (
-        <input
-          className="edit-input"
-          value={editText}
-          onChange={(e) => setEditText(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onBlur={handleEdit}
-          autoFocus
-        />
-      ) : (
-        <span 
-          className={`todo-text ${todo.completed ? 'completed' : ''}`}
-          onDoubleClick={() => setIsEditing(true)}
-        >
-          {todo.text}
-        </span>
-      )}
-
-      <select
-        className="priority-select"
-        value={todo.priority}
-        onChange={(e) => updatePriority(todo.id, e.target.value as Priority)}
-        style={{ color: PRIORITY_COLORS[todo.priority] }}
-      >
-        <option value={PRIORITY.HIGH}>高</option>
-        <option value={PRIORITY.MEDIUM}>中</option>
-        <option value={PRIORITY.LOW}>低</option>
-      </select>
-      <button className="delete-btn" onClick={() => deleteTodo(todo.id)}>
-        <Trash2 size={ICON_SIZE.SMALL} />
-      </button>
-=======
       <div className="todo-content">
-        <span className={`todo-text ${todo.completed ? 'completed' : ''}`}>
-          {todo.text}
-        </span>
+        {isEditing ? (
+          <input
+            className="edit-input"
+            value={editText}
+            onChange={(e) => setEditText(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onBlur={handleEdit}
+            autoFocus
+          />
+        ) : (
+          <span 
+            className={`todo-text ${todo.completed ? 'completed' : ''}`}
+            onDoubleClick={() => setIsEditing(true)}
+          >
+            {todo.text}
+          </span>
+        )}
         {todo.dueDate && (
           <div className={`due-date-badge ${isOverdue ? 'overdue' : ''}`}>
             {todo.dueDate}
@@ -172,7 +145,6 @@ function SortableTodoItem({ todo, toggleTodo, deleteTodo, updatePriority, update
           <Trash2 size={ICON_SIZE.SMALL} />
         </button>
       </div>
->>>>>>> feature/due-dates
     </li>
   );
 }
@@ -182,13 +154,20 @@ function App() {
     const saved = localStorage.getItem(STORAGE_KEY)
     if (!saved) return []
     const parsed = JSON.parse(saved)
-    return parsed.map((t: any) => ({ ...t, priority: t.priority || PRIORITY.MEDIUM }))
+    return parsed.map((t: any) => ({ 
+      ...t, 
+      priority: t.priority || PRIORITY.MEDIUM,
+      dueDate: t.dueDate || undefined
+    }))
   })
   const [inputValue, setInputValue] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [inputPriority, setInputPriority] = useState<Priority>(PRIORITY.MEDIUM)
   const [inputDueDate, setInputDueDate] = useState('')
   const [filter, setFilter] = useState<Filter>(FILTER.ALL)
+  const [theme, setTheme] = useState<'dark' | 'light' | 'tachyon'>(() => {
+    return (localStorage.getItem('tachyon-theme') as any) || 'dark'
+  })
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -196,6 +175,11 @@ function App() {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   )
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem('tachyon-theme', theme)
+  }, [theme])
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(todos))
@@ -293,6 +277,17 @@ function App() {
 
   return (
     <div className="todo-container">
+      <div className="theme-switcher">
+        {(['dark', 'light', 'tachyon'] as const).map((t) => (
+          <button
+            key={t}
+            className={`theme-btn ${theme === t ? 'active' : ''}`}
+            onClick={() => setTheme(t)}
+          >
+            {t.toUpperCase()}
+          </button>
+        ))}
+      </div>
       <h1 className="todo-title">実験的TODOアプリ</h1>
       
       <div className="stats-dashboard">
@@ -356,7 +351,7 @@ function App() {
           onKeyDown={handleKeyPress}
           placeholder="モルモット君への新しい指令..."
         />
-        <button className="add-btn" onClick={addTodo}>
+        <button className="add-btn" onClick={addTodo} aria-label="plus">
           <Plus size={ICON_SIZE.LARGE} />
         </button>
       </div>
@@ -378,11 +373,8 @@ function App() {
                 toggleTodo={toggleTodo}
                 deleteTodo={deleteTodo}
                 updatePriority={updatePriority}
-<<<<<<< HEAD
                 updateTodo={updateTodo}
-=======
                 updateDueDate={updateDueDate}
->>>>>>> feature/due-dates
               />
             ))}
           </ul>
