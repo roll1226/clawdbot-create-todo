@@ -91,6 +91,7 @@ function SortableTodoItem({ todo, toggleTodo, deleteTodo, updatePriority, update
       <button
         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}
         onClick={() => toggleTodo(todo.id)}
+        aria-label={`toggle-${todo.id}`}
       >
         {todo.completed ? (
           <CheckCircle2 size={ICON_SIZE.MEDIUM} color={THEME_COLORS.PRIMARY} />
@@ -387,6 +388,7 @@ function App() {
             key={f}
             className={`filter-btn ${filter === f ? 'active' : ''}`}
             onClick={() => setFilter(f)}
+            aria-label={`filter-${f}`}
           >
             {f === FILTER.ALL ? 'すべて' : f === FILTER.ACTIVE ? '未完了' : '完了済み'}
           </button>
