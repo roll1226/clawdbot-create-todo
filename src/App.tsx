@@ -41,9 +41,13 @@ interface SortableItemProps {
   toggleTodo: (id: string) => void
   deleteTodo: (id: string) => void
   updatePriority: (id: string, priority: Priority) => void
+  updateTodo: (id: string, text: string) => void
 }
 
-function SortableTodoItem({ todo, toggleTodo, deleteTodo, updatePriority }: SortableItemProps) {
+function SortableTodoItem({ todo, toggleTodo, deleteTodo, updatePriority, updateTodo }: SortableItemProps) {
+  const [isEditing, setIsEditing] = useState(false)
+  const [editText, setEditText] = useState(todo.text)
+
   const {
     attributes,
     listeners,
@@ -60,6 +64,21 @@ function SortableTodoItem({ todo, toggleTodo, deleteTodo, updatePriority }: Sort
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const handleEdit = () => {
+    if (isEditing && editText.trim() !== todo.text) {
+      updateTodo(todo.id, editText)
+    }
+    setIsEditing(!isEditing)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleEdit()
+    if (e.key === 'Escape') {
+      setEditText(todo.text)
+      setIsEditing(false)
+    }
+  }
+
   return (
     <li ref={setNodeRef} style={style} className={`todo-item priority-${todo.priority}`}>
       <div className="drag-handle" {...attributes} {...listeners}>
@@ -75,9 +94,25 @@ function SortableTodoItem({ todo, toggleTodo, deleteTodo, updatePriority }: Sort
           <Circle size={ICON_SIZE.MEDIUM} color={THEME_COLORS.TEXT_MUTED} />
         )}
       </button>
-      <span className={`todo-text ${todo.completed ? 'completed' : ''}`}>
-        {todo.text}
-      </span>
+      
+      {isEditing ? (
+        <input
+          className="edit-input"
+          value={editText}
+          onChange={(e) => setEditText(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={handleEdit}
+          autoFocus
+        />
+      ) : (
+        <span 
+          className={`todo-text ${todo.completed ? 'completed' : ''}`}
+          onDoubleClick={() => setIsEditing(true)}
+        >
+          {todo.text}
+        </span>
+      )}
+
       <select
         className="priority-select"
         value={todo.priority}
@@ -148,6 +183,14 @@ function App() {
 
   const deleteTodo = (id: string) => {
     setTodos(todos.filter((todo) => todo.id !== id))
+  }
+
+  const updateTodo = (id: string, text: string) => {
+    setTodos(
+      todos.map((todo) =>
+        todo.id === id ? { ...todo, text } : todo
+      )
+    )
   }
 
   const updatePriority = (id: string, priority: Priority) => {
@@ -254,6 +297,7 @@ function App() {
                 toggleTodo={toggleTodo}
                 deleteTodo={deleteTodo}
                 updatePriority={updatePriority}
+                updateTodo={updateTodo}
               />
             ))}
           </ul>

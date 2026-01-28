@@ -194,6 +194,17 @@ button.add-btn:active {
   opacity: 0.5;
 }
 
+.edit-input {
+  flex: 1;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid #2dd4bf;
+  border-radius: 0.25rem;
+  color: white;
+  padding: 0.2rem 0.5rem;
+  font-size: 1rem;
+  outline: none;
+}
+
 .priority-select {
   background: rgba(15, 23, 42, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.1);
