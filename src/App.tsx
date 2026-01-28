@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, CheckCircle2, Circle, GripVertical } from 'lucide-react'
+import { Plus, Trash2, CheckCircle2, Circle, GripVertical, Search } from 'lucide-react'
 import {
   DndContext,
   closestCenter,
@@ -103,6 +103,7 @@ function App() {
     return parsed.map((t: any) => ({ ...t, priority: t.priority || PRIORITY.MEDIUM }))
   })
   const [inputValue, setInputValue] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
   const [inputPriority, setInputPriority] = useState<Priority>(PRIORITY.MEDIUM)
   const [filter, setFilter] = useState<Filter>(FILTER.ALL)
 
@@ -118,9 +119,14 @@ function App() {
   }, [todos])
 
   const filteredTodos = todos.filter((todo) => {
-    if (filter === FILTER.ACTIVE) return !todo.completed
-    if (filter === FILTER.COMPLETED) return todo.completed
-    return true
+    const matchesFilter = 
+      filter === FILTER.ALL ? true :
+      filter === FILTER.ACTIVE ? !todo.completed :
+      todo.completed
+    
+    const matchesSearch = todo.text.toLowerCase().includes(searchQuery.toLowerCase())
+    
+    return matchesFilter && matchesSearch
   })
 
   const addTodo = () => {
@@ -213,6 +219,17 @@ function App() {
             style={{ width: `${completionRate}%` }}
           />
         </div>
+      </div>
+
+      <div className="search-group">
+        <Search size={18} className="search-icon" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="検体を検索..."
+          className="search-input"
+        />
       </div>
 
       <div className="todo-input-group">
