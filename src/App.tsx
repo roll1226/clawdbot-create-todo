@@ -23,15 +23,17 @@ interface Todo {
   id: string
   text: string
   completed: boolean
+  priority: 'high' | 'medium' | 'low'
 }
 
 interface SortableItemProps {
   todo: Todo
   toggleTodo: (id: string) => void
   deleteTodo: (id: string) => void
+  updatePriority: (id: string, priority: 'high' | 'medium' | 'low') => void
 }
 
-function SortableTodoItem({ todo, toggleTodo, deleteTodo }: SortableItemProps) {
+function SortableTodoItem({ todo, toggleTodo, deleteTodo, updatePriority }: SortableItemProps) {
   const {
     attributes,
     listeners,
@@ -48,8 +50,14 @@ function SortableTodoItem({ todo, toggleTodo, deleteTodo }: SortableItemProps) {
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const priorityColors = {
+    high: '#ef4444',
+    medium: '#f59e0b',
+    low: '#3b82f6',
+  };
+
   return (
-    <li ref={setNodeRef} style={style} className="todo-item">
+    <li ref={setNodeRef} style={style} className={`todo-item priority-${todo.priority}`}>
       <div className="drag-handle" {...attributes} {...listeners}>
         <GripVertical size={18} color="rgba(255,255,255,0.2)" />
       </div>
@@ -66,6 +74,16 @@ function SortableTodoItem({ todo, toggleTodo, deleteTodo }: SortableItemProps) {
       <span className={`todo-text ${todo.completed ? 'completed' : ''}`}>
         {todo.text}
       </span>
+      <select
+        className="priority-select"
+        value={todo.priority}
+        onChange={(e) => updatePriority(todo.id, e.target.value as any)}
+        style={{ color: priorityColors[todo.priority] }}
+      >
+        <option value="high">高</option>
+        <option value="medium">中</option>
+        <option value="low">低</option>
+      </select>
       <button className="delete-btn" onClick={() => deleteTodo(todo.id)}>
         <Trash2 size={18} />
       </button>
@@ -76,9 +94,12 @@ function SortableTodoItem({ todo, toggleTodo, deleteTodo }: SortableItemProps) {
 function App() {
   const [todos, setTodos] = useState<Todo[]>(() => {
     const saved = localStorage.getItem('tachyon-todos')
-    return saved ? JSON.parse(saved) : []
+    if (!saved) return []
+    const parsed = JSON.parse(saved)
+    return parsed.map((t: any) => ({ ...t, priority: t.priority || 'medium' }))
   })
   const [inputValue, setInputValue] = useState('')
+  const [inputPriority, setInputPriority] = useState<'high' | 'medium' | 'low'>('medium')
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all')
 
   const sensors = useSensors(
@@ -104,9 +125,11 @@ function App() {
       id: crypto.randomUUID(),
       text: inputValue,
       completed: false,
+      priority: inputPriority,
     }
     setTodos([...todos, newTodo])
     setInputValue('')
+    setInputPriority('medium')
   }
 
   const toggleTodo = (id: string) => {
@@ -119,6 +142,14 @@ function App() {
 
   const deleteTodo = (id: string) => {
     setTodos(todos.filter((todo) => todo.id !== id))
+  }
+
+  const updatePriority = (id: string, priority: 'high' | 'medium' | 'low') => {
+    setTodos(
+      todos.map((todo) =>
+        todo.id === id ? { ...todo, priority } : todo
+      )
+    )
   }
 
   const clearCompleted = () => {
@@ -145,6 +176,15 @@ function App() {
     <div className="todo-container">
       <h1 className="todo-title">実験的TODOアプリ</h1>
       <div className="todo-input-group">
+        <select
+          className="priority-input-select"
+          value={inputPriority}
+          onChange={(e) => setInputPriority(e.target.value as any)}
+        >
+          <option value="high">高</option>
+          <option value="medium">中</option>
+          <option value="low">低</option>
+        </select>
         <input
           type="text"
           value={inputValue}
@@ -173,6 +213,7 @@ function App() {
                 todo={todo}
                 toggleTodo={toggleTodo}
                 deleteTodo={deleteTodo}
+                updatePriority={updatePriority}
               />
             ))}
           </ul>

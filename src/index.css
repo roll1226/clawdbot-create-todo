@@ -181,6 +181,37 @@ button.delete-btn:hover {
   cursor: grabbing;
 }
 
+.priority-select, .priority-input-select {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.4rem;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.8rem;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.priority-input-select {
+  padding: 0.75rem 0.5rem;
+}
+
+.priority-select:focus, .priority-input-select:focus {
+  border-color: #2dd4bf;
+}
+
+.todo-item.priority-high {
+  border-left: 4px solid #ef4444;
+}
+
+.todo-item.priority-medium {
+  border-left: 4px solid #f59e0b;
+}
+
+.todo-item.priority-low {
+  border-left: 4px solid #3b82f6;
+}
+
 .clear-completed-btn {
   background: none;
   border: none;
