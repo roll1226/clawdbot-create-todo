@@ -15,7 +15,7 @@ const ItemLi = styled.li<{ $priority: Priority; $isOverdue: boolean; $isDragging
   background: var(--input-bg);
   border-radius: 0.8rem;
   border: 1px solid var(--border-color);
-  border-left: 5px solid ${({ $priority }) => (PRIORITY_COLORS as any)[$priority] || '#ccc'};
+  border-left: 5px solid ${({ $priority }) => PRIORITY_COLORS[$priority] || '#ccc'};
   transition: transform 0.2s, border-color 0.2s;
   opacity: ${({ $isDragging }) => ($isDragging ? 0.5 : 1)};
   z-index: ${({ $isDragging }) => ($isDragging ? 10 : 1)};
@@ -148,7 +148,7 @@ export function SortableTodoItem({ todo, toggleTodo, deleteTodo, updatePriority,
       <select
         value={todo.priority}
         onChange={(e) => updatePriority(todo.id, e.target.value as Priority)}
-        style={{ background: 'none', border: 'none', color: (PRIORITY_COLORS as any)[todo.priority] || '#ccc', fontWeight: 'bold', cursor: 'pointer' }}
+        style={{ background: 'none', border: 'none', color: PRIORITY_COLORS[todo.priority] || '#ccc', fontWeight: 'bold', cursor: 'pointer' }}
       >
         <option value={PRIORITY.HIGH}>高</option>
         <option value={PRIORITY.MEDIUM}>中</option>
