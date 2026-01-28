@@ -37,10 +37,68 @@ body {
   text-align: center;
 }
 
+.stats-dashboard {
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin-bottom: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.stats-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.stats-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.6;
+}
+
+.stats-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.progress-bar-container {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(to right, #2dd4bf, #3b82f6);
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 .todo-input-group {
   display: flex;
   gap: 0.5rem;
   margin-bottom: 2rem;
+}
+
+.priority-input-select {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  padding: 0.75rem 0.5rem;
+  color: white;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
 }
 
 input[type="text"] {
@@ -54,7 +112,7 @@ input[type="text"] {
   transition: border-color 0.2s;
 }
 
-input[type="text"]:focus {
+input[type="text"]:focus, .priority-input-select:focus {
   border-color: #2dd4bf;
 }
 
@@ -102,6 +160,30 @@ button.add-btn:active {
   border-color: rgba(45, 212, 191, 0.3);
 }
 
+.todo-item.priority-high {
+  border-left: 4px solid #ef4444;
+}
+
+.todo-item.priority-medium {
+  border-left: 4px solid #f59e0b;
+}
+
+.todo-item.priority-low {
+  border-left: 4px solid #3b82f6;
+}
+
+.drag-handle {
+  display: flex;
+  align-items: center;
+  cursor: grab;
+  padding-right: 4px;
+  touch-action: none;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
 .todo-text {
   flex: 1;
   font-size: 1rem;
@@ -112,11 +194,15 @@ button.add-btn:active {
   opacity: 0.5;
 }
 
-.checkbox {
-  width: 1.2rem;
-  height: 1.2rem;
+.priority-select {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.4rem;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.8rem;
+  outline: none;
   cursor: pointer;
-  accent-color: #2dd4bf;
+  transition: border-color 0.2s;
 }
 
 button.delete-btn {
@@ -136,4 +222,50 @@ button.delete-btn {
 button.delete-btn:hover {
   opacity: 1;
   background: rgba(239, 68, 68, 0.1);
+}
+
+.filter-group {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.filter-btn {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.6);
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.filter-btn:hover {
+  border-color: rgba(45, 212, 191, 0.5);
+  color: #2dd4bf;
+}
+
+.filter-btn.active {
+  background: rgba(45, 212, 191, 0.1);
+  border-color: #2dd4bf;
+  color: #2dd4bf;
+}
+
+.clear-completed-btn {
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-decoration: underline;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.clear-completed-btn:hover {
+  opacity: 1;
 }
