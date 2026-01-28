@@ -17,20 +17,30 @@ import {
   useSortable
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import {
+  STORAGE_KEY,
+  PRIORITY,
+  Priority,
+  FILTER,
+  Filter,
+  PRIORITY_COLORS,
+  THEME_COLORS,
+  ICON_SIZE
+} from './constants'
 import './index.css'
 
 interface Todo {
   id: string
   text: string
   completed: boolean
-  priority: 'high' | 'medium' | 'low'
+  priority: Priority
 }
 
 interface SortableItemProps {
   todo: Todo
   toggleTodo: (id: string) => void
   deleteTodo: (id: string) => void
-  updatePriority: (id: string, priority: 'high' | 'medium' | 'low') => void
+  updatePriority: (id: string, priority: Priority) => void
 }
 
 function SortableTodoItem({ todo, toggleTodo, deleteTodo, updatePriority }: SortableItemProps) {
@@ -50,25 +60,19 @@ function SortableTodoItem({ todo, toggleTodo, deleteTodo, updatePriority }: Sort
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const priorityColors = {
-    high: '#ef4444',
-    medium: '#f59e0b',
-    low: '#3b82f6',
-  };
-
   return (
     <li ref={setNodeRef} style={style} className={`todo-item priority-${todo.priority}`}>
       <div className="drag-handle" {...attributes} {...listeners}>
-        <GripVertical size={18} color="rgba(255,255,255,0.2)" />
+        <GripVertical size={ICON_SIZE.SMALL} color={THEME_COLORS.DRAG_HANDLE} />
       </div>
       <button
         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}
         onClick={() => toggleTodo(todo.id)}
       >
         {todo.completed ? (
-          <CheckCircle2 size={20} color="#2dd4bf" />
+          <CheckCircle2 size={ICON_SIZE.MEDIUM} color={THEME_COLORS.PRIMARY} />
         ) : (
-          <Circle size={20} color="rgba(255,255,255,0.3)" />
+          <Circle size={ICON_SIZE.MEDIUM} color={THEME_COLORS.TEXT_MUTED} />
         )}
       </button>
       <span className={`todo-text ${todo.completed ? 'completed' : ''}`}>
@@ -77,15 +81,15 @@ function SortableTodoItem({ todo, toggleTodo, deleteTodo, updatePriority }: Sort
       <select
         className="priority-select"
         value={todo.priority}
-        onChange={(e) => updatePriority(todo.id, e.target.value as any)}
-        style={{ color: priorityColors[todo.priority] }}
+        onChange={(e) => updatePriority(todo.id, e.target.value as Priority)}
+        style={{ color: PRIORITY_COLORS[todo.priority] }}
       >
-        <option value="high">高</option>
-        <option value="medium">中</option>
-        <option value="low">低</option>
+        <option value={PRIORITY.HIGH}>高</option>
+        <option value={PRIORITY.MEDIUM}>中</option>
+        <option value={PRIORITY.LOW}>低</option>
       </select>
       <button className="delete-btn" onClick={() => deleteTodo(todo.id)}>
-        <Trash2 size={18} />
+        <Trash2 size={ICON_SIZE.SMALL} />
       </button>
     </li>
   );
@@ -93,14 +97,14 @@ function SortableTodoItem({ todo, toggleTodo, deleteTodo, updatePriority }: Sort
 
 function App() {
   const [todos, setTodos] = useState<Todo[]>(() => {
-    const saved = localStorage.getItem('tachyon-todos')
+    const saved = localStorage.getItem(STORAGE_KEY)
     if (!saved) return []
     const parsed = JSON.parse(saved)
-    return parsed.map((t: any) => ({ ...t, priority: t.priority || 'medium' }))
+    return parsed.map((t: any) => ({ ...t, priority: t.priority || PRIORITY.MEDIUM }))
   })
   const [inputValue, setInputValue] = useState('')
-  const [inputPriority, setInputPriority] = useState<'high' | 'medium' | 'low'>('medium')
-  const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all')
+  const [inputPriority, setInputPriority] = useState<Priority>(PRIORITY.MEDIUM)
+  const [filter, setFilter] = useState<Filter>(FILTER.ALL)
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -110,12 +114,12 @@ function App() {
   )
 
   useEffect(() => {
-    localStorage.setItem('tachyon-todos', JSON.stringify(todos))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(todos))
   }, [todos])
 
   const filteredTodos = todos.filter((todo) => {
-    if (filter === 'active') return !todo.completed
-    if (filter === 'completed') return todo.completed
+    if (filter === FILTER.ACTIVE) return !todo.completed
+    if (filter === FILTER.COMPLETED) return todo.completed
     return true
   })
 
@@ -129,7 +133,7 @@ function App() {
     }
     setTodos([...todos, newTodo])
     setInputValue('')
-    setInputPriority('medium')
+    setInputPriority(PRIORITY.MEDIUM)
   }
 
   const toggleTodo = (id: string) => {
@@ -144,7 +148,7 @@ function App() {
     setTodos(todos.filter((todo) => todo.id !== id))
   }
 
-  const updatePriority = (id: string, priority: 'high' | 'medium' | 'low') => {
+  const updatePriority = (id: string, priority: Priority) => {
     setTodos(
       todos.map((todo) =>
         todo.id === id ? { ...todo, priority } : todo
@@ -179,11 +183,11 @@ function App() {
         <select
           className="priority-input-select"
           value={inputPriority}
-          onChange={(e) => setInputPriority(e.target.value as any)}
+          onChange={(e) => setInputPriority(e.target.value as Priority)}
         >
-          <option value="high">高</option>
-          <option value="medium">中</option>
-          <option value="low">低</option>
+          <option value={PRIORITY.HIGH}>高</option>
+          <option value={PRIORITY.MEDIUM}>中</option>
+          <option value={PRIORITY.LOW}>低</option>
         </select>
         <input
           type="text"
@@ -193,7 +197,7 @@ function App() {
           placeholder="モルモット君への新しい指令..."
         />
         <button className="add-btn" onClick={addTodo}>
-          <Plus size={24} />
+          <Plus size={ICON_SIZE.LARGE} />
         </button>
       </div>
 
@@ -221,13 +225,13 @@ function App() {
       </DndContext>
 
       <div className="filter-group">
-        {(['all', 'active', 'completed'] as const).map((f) => (
+        {(Object.values(FILTER)).map((f) => (
           <button
             key={f}
             className={`filter-btn ${filter === f ? 'active' : ''}`}
             onClick={() => setFilter(f)}
           >
-            {f === 'all' ? 'すべて' : f === 'active' ? '未完了' : '完了済み'}
+            {f === FILTER.ALL ? 'すべて' : f === FILTER.ACTIVE ? '未完了' : '完了済み'}
           </button>
         ))}
       </div>
