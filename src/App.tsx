@@ -7,7 +7,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  DragEndEvent
+  type DragEndEvent
 } from '@dnd-kit/core'
 import {
   arrayMove,
@@ -20,9 +20,9 @@ import { CSS } from '@dnd-kit/utilities'
 import {
   STORAGE_KEY,
   PRIORITY,
-  Priority,
+  type Priority,
   FILTER,
-  Filter,
+  type Filter,
   PRIORITY_COLORS,
   THEME_COLORS,
   ICON_SIZE
@@ -126,7 +126,9 @@ function App() {
   const addTodo = () => {
     if (!inputValue.trim()) return
     const newTodo: Todo = {
-      id: crypto.randomUUID(),
+      id: typeof crypto.randomUUID === 'function' 
+        ? crypto.randomUUID() 
+        : Math.random().toString(36).substring(2) + Date.now().toString(36),
       text: inputValue,
       completed: false,
       priority: inputPriority,
@@ -198,7 +200,7 @@ function App() {
           </div>
           <div className="stats-item">
             <span className="stats-label">未完了</span>
-            <span className="stats-value" style={{ color: PRIORITY_COLORS.HIGH }}>{activeCount}</span>
+            <span className="stats-value" style={{ color: PRIORITY_COLORS[PRIORITY.HIGH] }}>{activeCount}</span>
           </div>
           <div className="stats-item">
             <span className="stats-label">完了率</span>
