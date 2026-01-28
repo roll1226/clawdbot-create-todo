@@ -160,6 +160,12 @@ function App() {
     setTodos(todos.filter((todo) => !todo.completed))
   }
 
+  // 統計データの計算
+  const totalCount = todos.length
+  const completedCount = todos.filter((t) => t.completed).length
+  const activeCount = totalCount - completedCount
+  const completionRate = totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100)
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
 
@@ -179,6 +185,34 @@ function App() {
   return (
     <div className="todo-container">
       <h1 className="todo-title">実験的TODOアプリ</h1>
+      
+      <div className="stats-dashboard">
+        <div className="stats-grid">
+          <div className="stats-item">
+            <span className="stats-label">全タスク</span>
+            <span className="stats-value">{totalCount}</span>
+          </div>
+          <div className="stats-item">
+            <span className="stats-label">完了済み</span>
+            <span className="stats-value" style={{ color: THEME_COLORS.PRIMARY }}>{completedCount}</span>
+          </div>
+          <div className="stats-item">
+            <span className="stats-label">未完了</span>
+            <span className="stats-value" style={{ color: PRIORITY_COLORS.HIGH }}>{activeCount}</span>
+          </div>
+          <div className="stats-item">
+            <span className="stats-label">完了率</span>
+            <span className="stats-value">{completionRate}%</span>
+          </div>
+        </div>
+        <div className="progress-bar-container">
+          <div 
+            className="progress-bar-fill" 
+            style={{ width: `${completionRate}%` }}
+          />
+        </div>
+      </div>
+
       <div className="todo-input-group">
         <select
           className="priority-input-select"
