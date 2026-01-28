@@ -49,6 +49,10 @@ function App() {
     setTodos(todos.filter((todo) => todo.id !== id))
   }
 
+  const clearCompleted = () => {
+    setTodos(todos.filter((todo) => !todo.completed))
+  }
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') addTodo()
   }
@@ -103,6 +107,25 @@ function App() {
           </button>
         ))}
       </div>
+
+      {todos.some((t) => t.completed) && (
+        <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+          <button
+            onClick={clearCompleted}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#ef4444',
+              fontSize: '0.8rem',
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              opacity: 0.7,
+            }}
+          >
+            完了済みタスクをすべて削除
+          </button>
+        </div>
+      )}
       
       {filteredTodos.length === 0 && (
         <p style={{ textAlign: 'center', opacity: 0.5, marginTop: '2rem' }}>
