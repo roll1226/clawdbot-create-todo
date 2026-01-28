@@ -1,127 +1,23 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, CheckCircle2, Circle, GripVertical } from 'lucide-react'
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent
-} from '@dnd-kit/core'
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-  useSortable
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
-import {
-  STORAGE_KEY,
-  PRIORITY,
-  Priority,
-  FILTER,
-  Filter,
-  PRIORITY_COLORS,
-  THEME_COLORS,
-  ICON_SIZE
-} from './constants'
+import { Plus, Trash2, CheckCircle2, Circle } from 'lucide-react'
 import './index.css'
 
 interface Todo {
   id: string
   text: string
   completed: boolean
-  priority: Priority
-}
-
-interface SortableItemProps {
-  todo: Todo
-  toggleTodo: (id: string) => void
-  deleteTodo: (id: string) => void
-  updatePriority: (id: string, priority: Priority) => void
-}
-
-function SortableTodoItem({ todo, toggleTodo, deleteTodo, updatePriority }: SortableItemProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging
-  } = useSortable({ id: todo.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    zIndex: isDragging ? 1 : 0,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  return (
-    <li ref={setNodeRef} style={style} className={`todo-item priority-${todo.priority}`}>
-      <div className="drag-handle" {...attributes} {...listeners}>
-        <GripVertical size={ICON_SIZE.SMALL} color={THEME_COLORS.DRAG_HANDLE} />
-      </div>
-      <button
-        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}
-        onClick={() => toggleTodo(todo.id)}
-      >
-        {todo.completed ? (
-          <CheckCircle2 size={ICON_SIZE.MEDIUM} color={THEME_COLORS.PRIMARY} />
-        ) : (
-          <Circle size={ICON_SIZE.MEDIUM} color={THEME_COLORS.TEXT_MUTED} />
-        )}
-      </button>
-      <span className={`todo-text ${todo.completed ? 'completed' : ''}`}>
-        {todo.text}
-      </span>
-      <select
-        className="priority-select"
-        value={todo.priority}
-        onChange={(e) => updatePriority(todo.id, e.target.value as Priority)}
-        style={{ color: PRIORITY_COLORS[todo.priority] }}
-      >
-        <option value={PRIORITY.HIGH}>高</option>
-        <option value={PRIORITY.MEDIUM}>中</option>
-        <option value={PRIORITY.LOW}>低</option>
-      </select>
-      <button className="delete-btn" onClick={() => deleteTodo(todo.id)}>
-        <Trash2 size={ICON_SIZE.SMALL} />
-      </button>
-    </li>
-  );
 }
 
 function App() {
   const [todos, setTodos] = useState<Todo[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (!saved) return []
-    const parsed = JSON.parse(saved)
-    return parsed.map((t: any) => ({ ...t, priority: t.priority || PRIORITY.MEDIUM }))
+    const saved = localStorage.getItem('tachyon-todos')
+    return saved ? JSON.parse(saved) : []
   })
   const [inputValue, setInputValue] = useState('')
-  const [inputPriority, setInputPriority] = useState<Priority>(PRIORITY.MEDIUM)
-  const [filter, setFilter] = useState<Filter>(FILTER.ALL)
-
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  )
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(todos))
+    localStorage.setItem('tachyon-todos', JSON.stringify(todos))
   }, [todos])
-
-  const filteredTodos = todos.filter((todo) => {
-    if (filter === FILTER.ACTIVE) return !todo.completed
-    if (filter === FILTER.COMPLETED) return todo.completed
-    return true
-  })
 
   const addTodo = () => {
     if (!inputValue.trim()) return
@@ -129,11 +25,9 @@ function App() {
       id: crypto.randomUUID(),
       text: inputValue,
       completed: false,
-      priority: inputPriority,
     }
     setTodos([...todos, newTodo])
     setInputValue('')
-    setInputPriority(PRIORITY.MEDIUM)
   }
 
   const toggleTodo = (id: string) => {
@@ -148,36 +42,6 @@ function App() {
     setTodos(todos.filter((todo) => todo.id !== id))
   }
 
-  const updatePriority = (id: string, priority: Priority) => {
-    setTodos(
-      todos.map((todo) =>
-        todo.id === id ? { ...todo, priority } : todo
-      )
-    )
-  }
-
-  const clearCompleted = () => {
-    setTodos(todos.filter((todo) => !todo.completed))
-  }
-
-  // 統計データの計算
-  const totalCount = todos.length
-  const completedCount = todos.filter((t) => t.completed).length
-  const activeCount = totalCount - completedCount
-  const completionRate = totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100)
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event
-
-    if (over && active.id !== over.id) {
-      setTodos((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id)
-        const newIndex = items.findIndex((item) => item.id === over.id)
-        return arrayMove(items, oldIndex, newIndex)
-      })
-    }
-  }
-
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') addTodo()
   }
@@ -185,103 +49,43 @@ function App() {
   return (
     <div className="todo-container">
       <h1 className="todo-title">実験的TODOアプリ</h1>
-      
-      <div className="stats-dashboard">
-        <div className="stats-grid">
-          <div className="stats-item">
-            <span className="stats-label">全タスク</span>
-            <span className="stats-value">{totalCount}</span>
-          </div>
-          <div className="stats-item">
-            <span className="stats-label">完了済み</span>
-            <span className="stats-value" style={{ color: THEME_COLORS.PRIMARY }}>{completedCount}</span>
-          </div>
-          <div className="stats-item">
-            <span className="stats-label">未完了</span>
-            <span className="stats-value" style={{ color: PRIORITY_COLORS.HIGH }}>{activeCount}</span>
-          </div>
-          <div className="stats-item">
-            <span className="stats-label">完了率</span>
-            <span className="stats-value">{completionRate}%</span>
-          </div>
-        </div>
-        <div className="progress-bar-container">
-          <div 
-            className="progress-bar-fill" 
-            style={{ width: `${completionRate}%` }}
-          />
-        </div>
-      </div>
-
       <div className="todo-input-group">
-        <select
-          className="priority-input-select"
-          value={inputPriority}
-          onChange={(e) => setInputPriority(e.target.value as Priority)}
-        >
-          <option value={PRIORITY.HIGH}>高</option>
-          <option value={PRIORITY.MEDIUM}>中</option>
-          <option value={PRIORITY.LOW}>低</option>
-        </select>
         <input
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={handleKeyPress}
+          onKeyPress={handleKeyPress}
           placeholder="モルモット君への新しい指令..."
         />
         <button className="add-btn" onClick={addTodo}>
-          <Plus size={ICON_SIZE.LARGE} />
+          <Plus size={24} />
         </button>
       </div>
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={filteredTodos.map(t => t.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          <ul className="todo-list">
-            {filteredTodos.map((todo) => (
-              <SortableTodoItem
-                key={todo.id}
-                todo={todo}
-                toggleTodo={toggleTodo}
-                deleteTodo={deleteTodo}
-                updatePriority={updatePriority}
-              />
-            ))}
-          </ul>
-        </SortableContext>
-      </DndContext>
-
-      <div className="filter-group">
-        {(Object.values(FILTER)).map((f) => (
-          <button
-            key={f}
-            className={`filter-btn ${filter === f ? 'active' : ''}`}
-            onClick={() => setFilter(f)}
-          >
-            {f === FILTER.ALL ? 'すべて' : f === FILTER.ACTIVE ? '未完了' : '完了済み'}
-          </button>
+      <ul className="todo-list">
+        {todos.map((todo) => (
+          <li key={todo.id} className="todo-item">
+            <button
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+              onClick={() => toggleTodo(todo.id)}
+            >
+              {todo.completed ? (
+                <CheckCircle2 size={20} color="#2dd4bf" />
+              ) : (
+                <Circle size={20} color="rgba(255,255,255,0.3)" />
+              )}
+            </button>
+            <span className={`todo-text ${todo.completed ? 'completed' : ''}`}>
+              {todo.text}
+            </span>
+            <button className="delete-btn" onClick={() => deleteTodo(todo.id)}>
+              <Trash2 size={18} />
+            </button>
+          </li>
         ))}
-      </div>
-
-      {todos.some((t) => t.completed) && (
-        <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-          <button
-            onClick={clearCompleted}
-            className="clear-completed-btn"
-          >
-            完了済みタスクをすべて削除
-          </button>
-        </div>
-      )}
+      </ul>
       
-      {filteredTodos.length === 0 && (
+      {todos.length === 0 && (
         <p style={{ textAlign: 'center', opacity: 0.5, marginTop: '2rem' }}>
           まだ解析すべきデータが存在しないようだね。
         </p>
