@@ -7,7 +7,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  DragEndEvent
+  type DragEndEvent
 } from '@dnd-kit/core'
 import {
   SortableContext,
@@ -20,6 +20,7 @@ import {
   FILTER,
   ICON_SIZE
 } from './constants'
+import type { Priority, Filter, ThemeType } from './types'
 import { useTodos, useTheme } from './hooks/useTodoApp'
 import { GlobalStyle } from './styles/GlobalStyle'
 import { Container, Title, Button, Input, Select } from './components/StyledElements'
@@ -46,7 +47,7 @@ const StatsSection = styled.div`
 const StatItem = styled.div`
   text-align: center;
   span:first-child { font-size: 0.7rem; opacity: 0.6; display: block; }
-  span:last-child { font-size: 1.2rem; font-weight: 800; }
+  span:last-child { font-size: 1.2rem; font-weight: 700; }
 `;
 
 const SearchBar = styled.div`
@@ -94,9 +95,9 @@ function App() {
 
   const [inputValue, setInputValue] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [inputPriority, setInputPriority] = useState<typeof PRIORITY[keyof typeof PRIORITY]>(PRIORITY.MEDIUM);
+  const [inputPriority, setInputPriority] = useState<Priority>(PRIORITY.MEDIUM);
   const [inputDueDate, setInputDueDate] = useState('');
-  const [filter, setFilter] = useState<typeof FILTER[keyof typeof FILTER]>(FILTER.ALL);
+  const [filter, setFilter] = useState<Filter>(FILTER.ALL);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -144,7 +145,7 @@ function App() {
             <Button 
               key={t} 
               variant={theme === t ? 'active' : 'ghost'} 
-              onClick={() => setTheme(t)}
+              onClick={() => setTheme(t as ThemeType)}
               style={{ fontSize: '0.65rem', padding: '0.3rem 0.6rem' }}
             >
               {t.toUpperCase()}
@@ -173,7 +174,7 @@ function App() {
         </SearchBar>
 
         <InputRow>
-          <Select value={inputPriority} onChange={e => setInputPriority(e.target.value as any)}>
+          <Select value={inputPriority} onChange={e => setInputPriority(e.target.value as Priority)}>
             <option value={PRIORITY.HIGH}>高</option>
             <option value={PRIORITY.MEDIUM}>中</option>
             <option value={PRIORITY.LOW}>低</option>
@@ -214,7 +215,7 @@ function App() {
         </DndContext>
 
         <FilterRow>
-          {Object.values(FILTER).map(f => (
+          {(Object.values(FILTER) as Filter[]).map(f => (
             <Button 
               key={f} 
               variant={filter === f ? 'active' : 'ghost'} 

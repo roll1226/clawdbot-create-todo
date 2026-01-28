@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { render, screen, fireEvent, within } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import App from '../App'
 
 describe('Experimental TODO App UI', () => {
@@ -31,7 +31,6 @@ describe('Experimental TODO App UI', () => {
 
     const todoText = screen.getByText('Test completion')
     // Click the toggle button using aria-label
-    // Need to find the ID first. In real test we'd mock the ID generator.
     const checkbox = screen.getByLabelText(/toggle-/i)
 
     fireEvent.click(checkbox)

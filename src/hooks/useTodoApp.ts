@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { STORAGE_KEYS } from '../constants';
-import { Todo, ThemeType } from '../types';
+import type { Todo, ThemeType } from '../types';
 import { generateId } from '../utils/todoUtils';
 
 export const useTodos = () => {

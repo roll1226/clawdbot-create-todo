@@ -4,7 +4,7 @@ import { GripVertical, CheckCircle2, Circle, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import styled from 'styled-components';
 import { ICON_SIZE, PRIORITY_COLORS, PRIORITY } from '../constants';
-import { Todo, Priority } from '../types';
+import type { Todo, Priority } from '../types';
 import { isOverdue } from '../utils/todoUtils';
 
 const ItemLi = styled.li<{ $priority: Priority; $isOverdue: boolean; $isDragging: boolean }>`
@@ -137,6 +137,13 @@ export function SortableTodoItem({ todo, toggleTodo, deleteTodo, updatePriority,
         )}
         {todo.dueDate && <DueDate $overdue={overdue}>{todo.dueDate}</DueDate>}
       </TodoContent>
+
+      <input
+        type="date"
+        value={todo.dueDate || ''}
+        onChange={(e) => updateDueDate(todo.id, e.target.value)}
+        style={{ background: 'none', border: 'none', color: 'inherit', fontSize: '0.7rem' }}
+      />
 
       <select
         value={todo.priority}

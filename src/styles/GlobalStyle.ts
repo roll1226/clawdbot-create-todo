@@ -1,6 +1,6 @@
 import { createGlobalStyle } from 'styled-components';
 import { THEME_COLORS } from '../constants';
-import { ThemeType } from '../types';
+import type { ThemeType } from '../types';
 
 export const GlobalStyle = createGlobalStyle<{ themeMode: ThemeType }>`
   :root {

@@ -1,4 +1,6 @@
-import { Priority, Filter } from '../types';
+import type { Priority, Filter } from '../constants';
+
+export type { Priority, Filter };
 
 export interface Todo {
   id: string;
